@@ -8,33 +8,28 @@ def calibrate():
     print(mtx)
 
 
-def hls_select(img, thresh=(230, 255)):
-    hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
-    S = hls[:,:,2]
-    binary_output = np.zeros_like(S)
-    binary_output[(S > thresh[0]) & (S <= thresh[1])] = 1
-    return binary_output
-
-
-def abs_sobel_x(img, thresh=(20, 100)):
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    sobel = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
-    abs_sobel = np.absolute(sobel)
-    scaled_sobel = np.uint8(255*abs_sobel/np.max(abs_sobel))
-    binary_output = np.zeros_like(scaled_sobel)
-    binary_output[(scaled_sobel >= thresh[0]) & (scaled_sobel <= thresh[1])] = 1
-    return binary_output
-
-
 def filter():
     img = cv2.imread("test_images/test1.jpg")
     img2 = process.filter_pipeline_single_image(img)
 
 
+def process_video():
+    from moviepy.editor import VideoFileClip
+    project_output = "project.mp4"
+
+    mtx, dist = process.calculate_camera_distortion()
+    M_persp, Minv_persp = process.get_perspective_transform_matrixes()
+    #clip_project = VideoFileClip("project_video.mp4").subclip(40.8, 42)
+    clip_project = VideoFileClip("project_video.mp4")
+    pro = lambda img: process.process_image(img, mtx, dist, M_persp, Minv_persp)
+    project_clip = clip_project.fl_image(pro)
+    project_clip.write_videofile(project_output, audio=False)
+
+
 def main():
     logging.basicConfig(level=logging.DEBUG)
     logging.info('Started')
-    calibrate()
+    process_video()
     logging.info('Finished')
 
 if __name__ == '__main__':

@@ -170,13 +170,38 @@ def draw_line(undist, warped, left_fit, right_fit, Minv_persp):
     return result, color_warp
 
 
-def process_image(img, mtx, dist, M_persp, Minv_persp, s_thresh=(170, 255), sx_thresh=(40, 100)):
+global left_fit
+global right_fit
+left_fit = None
+right_fit = None
+
+
+def process_image(img, mtx, dist, M_persp, Minv_persp, s_thresh=(180, 255), sx_thresh=(40, 100)):
     img_undist = cv2.undistort(img, mtx, dist, None, mtx)
     img_filtered = filter_pipeline_single_image(img_undist, s_thresh, sx_thresh)
     img_size = (img.shape[1], img.shape[0])
     img_warped = cv2.warpPerspective(img_filtered, M_persp, img_size, flags=cv2.INTER_LINEAR)
 
-    left_fit, right_fit, out_imgfit = fit_lines(img_warped)
+    global left_fit
+    global right_fit
+
+    new_left_fit, new_right_fit, _ = fit_lines(img_warped)
+    if left_fit is None:
+        left_fit = new_left_fit
+    else:
+        if new_left_fit is not []:
+            left_fit[0] = 0.9 * left_fit[0] + 0.1 * new_left_fit[0]
+            left_fit[1] = 0.9 * left_fit[1] + 0.1 * new_left_fit[1]
+            left_fit[2] = 0.9 * left_fit[2] + 0.1 * new_left_fit[2]
+
+    if right_fit is None:
+        right_fit = new_right_fit
+    else:
+        if new_right_fit is not []:
+            right_fit[0] = 0.9 * right_fit[0] + 0.1 * new_right_fit[0]
+            right_fit[1] = 0.9 * right_fit[1] + 0.1 * new_right_fit[1]
+            right_fit[2] = 0.9 * right_fit[2] + 0.1 * new_right_fit[2]
+
     left_curv, right_curv, center_off = curvature(left_fit, right_fit, img_warped)
 
     # Warp back to original and merge with image
