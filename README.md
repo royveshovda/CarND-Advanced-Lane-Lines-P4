@@ -122,7 +122,8 @@ I calculate the center offset and curvature of the left and right lines based on
 The picture is in pixel value, so we have to transform into meter scale.
 ```
 ym_per_pix = 30/720 # meters per pixel - y dimension
-xm_per_pix = 3.7/700 # meteres per pixel - x dimension```
+xm_per_pix = 3.7/700 # meteres per pixel - x dimension
+```
 
 I also calculated the vehicle position by assuming that the camera is on the center of the car. The average of the left and right lane position will give us the position of the car.
 
