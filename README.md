@@ -22,10 +22,9 @@ The goals / steps of this project are the following:
 [image1]: ./output_images/calibration_undist.jpg "Undistorted"
 [image2]: ./output_images/undistorted.jpg "Road Transformed"
 [image3]: ./output_images/filtered.jpg "Binary Example"
-
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[image4]: ./output_images/warped.jpg "Warp Example"
+[image5]: ./output_images/lines.jpg "Fit Visual"
+[image6]: ./output_images/processed.jpg "Output"
 [video1]: ./project.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -72,7 +71,9 @@ To filter an image I used a combination of threshold filter on the S-channel in 
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+I have a function called 'get_perspective_transform_matrixes' (lines 58-65) in the file 'process.py'. This function return both transformation matrixes for normal to birds-eye view, and back again.
+
+These matrixes are based on the following source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
 
 ```
 src = np.float32(
@@ -96,27 +97,38 @@ This resulted in the following source and destination points:
 | 1127, 720     | 960, 720      |
 | 695, 460      | 960, 0        |
 
-I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-## TODO: Provide example
+##### Example of warped image
 ![alt text][image4]
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+I used the sliding window algorithm, described in class to detect the left and right lines. This algorithm basically tried to detect to most likely area for where the line might be. For the base of the search I used a histogram output, splits this in the middle, and decides the highest spike in the left and right part will be the starting point for each line. After I have found these windows stacked on to of each other (as shown in the image below), I use Numpy's function 'polyfit', which gives me back second order function fitted to the detected windows. The detected lines are not drawn in the picture, but they always follow the center of the detected windows.
 
-## TODO: Provide example
+The code for this is located in 'process.py' in a function called 'fit_lines' (lines 68-130).
+
+An example of usage is shown in 'example.py' in the function 'fit_lines_example' (lines 41-50).
+
+It is important to note that thsi algorithm works on a filtered and warped image to make sense.
+
+
 ![alt text][image5]
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+I calculate the center offset and curvature of the left and right lines based on the fitted lines from the previous step ('fit_lines'). The code is located in the file 'process.py' in the function 'curvature' (lines 133-147).
+
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
 
-## TODO: Provide example
+I extracted the part where I process an image and project back from birds-eye view in 'example.py' in a function called 'process_image_example' (lines 53-58).
+
+The processing happens in 'process.py' in the functions 'process_image' (lines 179-223), and 'draw_line' (lines 150-170). The 'draw_line' function plots the left and right lines, and warpes the image back from birds-eye perspective, while the function 'process_image' smooths the fitted lines and applies the text for the curvatures and center offset.
+
+The smoothing of the lines happens with a factor of 0.9 for the previous line, and 0.1 for the newly fitted line. This way the previous line is much more important than the newly detected line, and slows down the detected area from jumping around under harder conditions.
+
+##### Example of processed image
 ![alt text][image6]
 
 ---
@@ -133,4 +145,6 @@ Here's a [link to my video result](./project.mp4)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+I decided to go for the suggestions from class and use only Sobel X and S-channel in HLS colorspace. This turned out to be very hard to tune correctly. The filters are very sensitive to markings on the road and color changes, like shadows. I also had to implement a smoothing algorithm to prevent the lines to jump around too much between each frame. As a result of this, the performance on the harder videos are rather poor. I do not have good enough filters for the 'challenge_video.mp4', and the smoothing part makes the algorithm adapt too slow to the turning road in 'harder_challenge_video.mp4' (filters should also be improved here).
+
+So In summary the best place to improve will be to get better filters. I could also use previous findings in the window search, to avoid starting over each time. This would improve the left line a lot, as it jumps around a bit in the current implementation.
