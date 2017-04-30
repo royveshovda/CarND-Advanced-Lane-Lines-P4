@@ -41,7 +41,7 @@ def filter_pipeline_single_image(img, s_thresh=(185, 255), sx_thresh=(40, 100)):
     s_channel = hsv[:, :, 2]
 
     # Sobel x
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0)  # Derivative in x
     abs_sobel_x = np.absolute(sobel_x)
     scaled_sobel = np.uint8(255 * abs_sobel_x / np.max(abs_sobel_x))
