@@ -221,3 +221,39 @@ def process_image(img, mtx, dist, M_persp, Minv_persp, s_thresh=(180, 255), sx_t
     cv2.putText(img_out, text_center, (500, 100), font_face, font_scale, (255, 255, 255), thickness, lineType=cv2.LINE_AA)
 
     return img_out
+
+
+def process_project_video():
+    from moviepy.editor import VideoFileClip
+    project_output = "project.mp4"
+
+    mtx, dist = calculate_camera_distortion()
+    M_persp, Minv_persp = get_perspective_transform_matrixes()
+    clip_project = VideoFileClip("project_video.mp4")
+    pro = lambda img: process_image(img, mtx, dist, M_persp, Minv_persp)
+    project_clip = clip_project.fl_image(pro)
+    project_clip.write_videofile(project_output, audio=False)
+
+
+def process_challenge_video():
+    from moviepy.editor import VideoFileClip
+    project_output = "out_challenge.mp4"
+
+    mtx, dist = calculate_camera_distortion()
+    M_persp, Minv_persp = get_perspective_transform_matrixes()
+    clip_project = VideoFileClip("challenge_video.mp4")
+    pro = lambda img: process_image(img, mtx, dist, M_persp, Minv_persp)
+    project_clip = clip_project.fl_image(pro)
+    project_clip.write_videofile(project_output, audio=False)
+
+
+def process_harder_video():
+    from moviepy.editor import VideoFileClip
+    project_output = "out_harder_project.mp4"
+
+    mtx, dist = calculate_camera_distortion()
+    M_persp, Minv_persp = get_perspective_transform_matrixes()
+    clip_project = VideoFileClip("harder_challenge_video.mp4")
+    pro = lambda img: process_image(img, mtx, dist, M_persp, Minv_persp)
+    project_clip = clip_project.fl_image(pro)
+    project_clip.write_videofile(project_output, audio=False)
