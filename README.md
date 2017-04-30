@@ -116,7 +116,15 @@ It is important to note that thsi algorithm works on a filtered and warped image
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
+
 I calculate the center offset and curvature of the left and right lines based on the fitted lines from the previous step ('fit_lines'). The code is located in the file 'process.py' in the function 'curvature' (lines 133-147).
+
+The picture is in pixel value, so we have to transform into meter scale.
+```
+ym_per_pix = 30/720 # meters per pixel - y dimension
+xm_per_pix = 3.7/700 # meteres per pixel - x dimension```
+
+I also calculated the vehicle position by assuming that the camera is on the center of the car. The average of the left and right lane position will give us the position of the car.
 
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
