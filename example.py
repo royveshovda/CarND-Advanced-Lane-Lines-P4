@@ -65,39 +65,6 @@ def hls_select(img, thresh=(230, 255)):
     return binary_output
 
 
-def white_lines(img):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    H = hsv[:,:,0]
-    S = hsv[:,:,1]
-    V = hsv[:,:,2]
-    w_h_thresh = [4, 255]
-    w_s_thresh = [0, 32]
-    w_v_thresh = [207, 255]
-    binary_output = np.zeros_like(H)
-    binary_output[(H >= w_h_thresh[0]) & (H <= w_h_thresh[1]) & (S >= w_s_thresh[0]) & (S <= w_s_thresh[1]) & (V >= w_v_thresh[0]) & (V <= w_v_thresh[1])] = 1
-    return binary_output
-
-
-def yellow_lines(img):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    H = hsv[:,:,0]
-    S = hsv[:,:,1]
-    V = hsv[:,:,2]
-    y_h_thresh = [18, 80]
-    y_s_thresh = [80, 255]
-    y_v_thresh = [0, 255]
-    binary_output = np.zeros_like(H)
-    binary_output[(H >= y_h_thresh[0]) & (H <= y_h_thresh[1]) & (S >= y_s_thresh[0]) & (S <= y_s_thresh[1]) & (V >= y_v_thresh[0]) & (V <= y_v_thresh[1])] = 1
-    return binary_output
-
-
-def white_yellow_lines(img):
-    yellow_lane = yellow_lines(img)
-    white_lane = white_lines(img)
-    binary_output = cv2.bitwise_or(yellow_lane, white_lane)
-    return binary_output
-
-
 def white_example():
     img = cv2.imread("test_images/test3.jpg")
     img_binary = process.color_filter(img, h_thresh=(4, 255), s_thresh=(0, 32), v_thresh=(207, 255))
@@ -119,6 +86,13 @@ def white_and_yellow_example():
     cv2.imwrite("output_images/white_yellow.jpg", img_dst)
 
 
+def sobel_x_example():
+    img = cv2.imread("test_images/test3.jpg")
+    img_binary = process.sobel_x_filter(img)
+    img_dst = cv2.cvtColor(img_binary * 255, cv2.COLOR_GRAY2RGB)
+    cv2.imwrite("output_images/sobelx.jpg", img_dst)
+
+
 def main():
     logging.basicConfig(level=logging.DEBUG)
     logging.info('Started')
@@ -130,7 +104,8 @@ def main():
     #white_example()
     #yellow_example()
     #white_and_yellow_example()
-    # process_image_example()
+    #sobel_x_example()
+    #process_image_example()
     process.process_project_video()
     #process.process_challenge_video()
     #process.process_harder_video()
