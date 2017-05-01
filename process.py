@@ -34,24 +34,39 @@ def calculate_camera_distortion():
     return mtx, dist
 
 
-def filter_pipeline_single_image(img, s_thresh=(185, 255), sx_thresh=(40, 100)):
-    img = np.copy(img)
-    # Convert to HSV color space and separate the V channel
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HLS).astype(np.float)
-    s_channel = hsv[:, :, 2]
+def filter_pipeline_single_image(img):
+    img2 = white_yellow_lines(img)
+    img3 = sobel_x_filter(img)
+    combined = cv2.bitwise_or(img2, img3)
+    binary_output = cv2.GaussianBlur(combined, (9, 9), 0)
+    return binary_output
 
-    # Sobel x
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0)  # Derivative in x
+
+def color_filter(img, h_thresh, s_thresh, v_thresh):
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    h = hsv[:, :, 0]
+    s = hsv[:, :, 1]
+    v = hsv[:, :, 2]
+    binary_output = np.zeros_like(h)
+    binary_output[(h >= h_thresh[0]) & (h <= h_thresh[1]) & (s >= s_thresh[0]) & (s <= s_thresh[1]) & (v >= v_thresh[0]) & (v <= v_thresh[1])] = 1
+    return binary_output
+
+
+def white_yellow_lines(img):
+    yellow_lane = color_filter(img, h_thresh=(18, 110), s_thresh=(100, 255), v_thresh=(100, 255))
+    white_lane = color_filter(img, h_thresh=(4, 255), s_thresh=(0, 32), v_thresh=(207, 255))
+    binary_output = cv2.bitwise_or(yellow_lane, white_lane)
+    return binary_output
+
+
+def sobel_x_filter(img, thresh=(20, 100), sobel_kernel=3):
+    channel = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    sobel_x = cv2.Sobel(channel, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
     abs_sobel_x = np.absolute(sobel_x)
     scaled_sobel = np.uint8(255 * abs_sobel_x / np.max(abs_sobel_x))
 
     binary_output = np.zeros_like(scaled_sobel)
-    binary_output[
-                    ((scaled_sobel >= sx_thresh[0]) & (scaled_sobel <= sx_thresh[1]))
-                    |
-                    ((s_channel >= s_thresh[0]) & (s_channel <= s_thresh[1]))
-                ] = 1
+    binary_output[((scaled_sobel >= thresh[0]) & (scaled_sobel <= thresh[1]))] = 1
     return binary_output
 
 
@@ -172,13 +187,13 @@ def draw_line(undist, warped, left_fit, right_fit, Minv_persp):
 
 global left_fit
 global right_fit
-left_fit = None
-right_fit = None
+left_fit = []
+right_fit = []
 
 
-def process_image(img, mtx, dist, M_persp, Minv_persp, s_thresh=(180, 255), sx_thresh=(40, 100)):
+def process_image(img, mtx, dist, M_persp, Minv_persp):
     img_undist = cv2.undistort(img, mtx, dist, None, mtx)
-    img_filtered = filter_pipeline_single_image(img_undist, s_thresh, sx_thresh)
+    img_filtered = filter_pipeline_single_image(img_undist)
     img_size = (img.shape[1], img.shape[0])
     img_warped = cv2.warpPerspective(img_filtered, M_persp, img_size, flags=cv2.INTER_LINEAR)
 
@@ -186,18 +201,18 @@ def process_image(img, mtx, dist, M_persp, Minv_persp, s_thresh=(180, 255), sx_t
     global right_fit
 
     new_left_fit, new_right_fit, _ = fit_lines(img_warped)
-    if left_fit is None:
+    if len(left_fit) == 0:
         left_fit = new_left_fit
     else:
-        if new_left_fit is not []:
+        if len(new_left_fit) == 3:
             left_fit[0] = 0.9 * left_fit[0] + 0.1 * new_left_fit[0]
             left_fit[1] = 0.9 * left_fit[1] + 0.1 * new_left_fit[1]
             left_fit[2] = 0.9 * left_fit[2] + 0.1 * new_left_fit[2]
 
-    if right_fit is None:
+    if len(right_fit) == 0:
         right_fit = new_right_fit
     else:
-        if new_right_fit is not []:
+        if len(new_right_fit) == 3:
             right_fit[0] = 0.9 * right_fit[0] + 0.1 * new_right_fit[0]
             right_fit[1] = 0.9 * right_fit[1] + 0.1 * new_right_fit[1]
             right_fit[2] = 0.9 * right_fit[2] + 0.1 * new_right_fit[2]
@@ -226,7 +241,6 @@ def process_image(img, mtx, dist, M_persp, Minv_persp, s_thresh=(180, 255), sx_t
 def process_project_video():
     from moviepy.editor import VideoFileClip
     project_output = "project.mp4"
-
     mtx, dist = calculate_camera_distortion()
     M_persp, Minv_persp = get_perspective_transform_matrixes()
     clip_project = VideoFileClip("project_video.mp4")
