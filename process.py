@@ -213,21 +213,23 @@ def process_image(img, mtx, dist, M_persp, Minv_persp):
     global right_fit
 
     new_left_fit, new_right_fit, _ = fit_lines(img_warped)
+    new_factor = 0.9
+    old_factor = 1.0 - new_factor
     if len(left_fit) == 0:
         left_fit = new_left_fit
     else:
         if len(new_left_fit) == 3:
-            left_fit[0] = 0.9 * left_fit[0] + 0.1 * new_left_fit[0]
-            left_fit[1] = 0.9 * left_fit[1] + 0.1 * new_left_fit[1]
-            left_fit[2] = 0.9 * left_fit[2] + 0.1 * new_left_fit[2]
+            left_fit[0] = new_factor * left_fit[0] + old_factor * new_left_fit[0]
+            left_fit[1] = new_factor * left_fit[1] + old_factor * new_left_fit[1]
+            left_fit[2] = new_factor * left_fit[2] + old_factor * new_left_fit[2]
 
     if len(right_fit) == 0:
         right_fit = new_right_fit
     else:
         if len(new_right_fit) == 3:
-            right_fit[0] = 0.9 * right_fit[0] + 0.1 * new_right_fit[0]
-            right_fit[1] = 0.9 * right_fit[1] + 0.1 * new_right_fit[1]
-            right_fit[2] = 0.9 * right_fit[2] + 0.1 * new_right_fit[2]
+            right_fit[0] = new_factor * right_fit[0] + old_factor * new_right_fit[0]
+            right_fit[1] = new_factor * right_fit[1] + old_factor * new_right_fit[1]
+            right_fit[2] = new_factor * right_fit[2] + old_factor * new_right_fit[2]
 
     left_curv, right_curv, center_off = curvature(left_fit, right_fit, img_warped)
 
